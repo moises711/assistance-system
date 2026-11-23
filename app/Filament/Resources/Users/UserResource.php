@@ -10,17 +10,17 @@ use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = User::class;
 
@@ -55,13 +55,15 @@ class UserResource extends Resource
             //
         ];
     }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
-        if ($user && $user->hasAnyRole('super_admin')) {
+        if ($user && ($user->hasAnyRole('super_admin') || ($user->isManager() && $user->can('viewAny', User::class)))) {
             return $query;
         }
+
         return $query->where('id', auth()->id());
     }
 

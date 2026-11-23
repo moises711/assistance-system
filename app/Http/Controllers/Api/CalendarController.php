@@ -2,79 +2,68 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Calendar;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
-class CalendarController extends Controller
+class CalendarController extends ApiController
 {
-    /**
-     * Listar todos los eventos del calendario.
-     */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(Calendar::all());
+        $data = $request->validate(['date_from' => 'nullable|date', 'date_to' => 'nullable|date|after_or_equal:date_from']);
+        $query = $this->visibleQuery($request, Calendar::class)
+            ->when($data['date_from'] ?? null, fn ($q, $v) => $q->whereDate('due_at', '>=', $v))
+            ->when($data['date_to'] ?? null, fn ($q, $v) => $q->whereDate('due_at', '<=', $v));
+
+        return response()->json($query->orderBy('due_at')->get());
     }
 
-    /**
-     * Crear un nuevo evento en el calendario.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_time'  => 'required|date',
-            'end_time'    => 'required|date|after_or_equal:start_time',
-        ]);
+        Gate::authorize('create', Calendar::class);
+        $data = $this->validated($request);
+        $data['user_id'] ??= $request->user()->id;
+        $this->authorizeOwner($request, (int) $data['user_id']);
 
-        $calendar = Calendar::create($validated);
-
-        return response()->json([
-            'message'  => 'Evento creado correctamente',
-            'calendar' => $calendar,
-        ], 201);
+        return response()->json(['message' => 'Evento creado correctamente', 'calendar' => Calendar::create($data)], 201);
     }
 
-    /**
-     * Mostrar un evento específico.
-     */
-    public function show(Calendar $calendar)
+    public function show(Calendar $calendar): JsonResponse
     {
+        Gate::authorize('view', $calendar);
+
         return response()->json($calendar);
     }
 
-    /**
-     * Actualizar un evento existente.
-     */
-    public function update(Request $request, Calendar $calendar)
+    public function update(Request $request, Calendar $calendar): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id'     => 'sometimes|exists:users,id',
-            'title'       => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'start_time'  => 'sometimes|date',
-            'end_time'    => 'sometimes|date|after_or_equal:start_time',
-        ]);
+        Gate::authorize('update', $calendar);
+        $data = $this->validated($request, true);
+        $this->authorizeOwner($request, (int) ($data['user_id'] ?? $calendar->user_id));
+        $calendar->update($data);
 
-        $calendar->update($validated);
-
-        return response()->json([
-            'message'  => 'Evento actualizado correctamente',
-            'calendar' => $calendar,
-        ]);
+        return response()->json(['message' => 'Evento actualizado correctamente', 'calendar' => $calendar]);
     }
 
-    /**
-     * Eliminar un evento del calendario.
-     */
-    public function destroy(Calendar $calendar)
+    public function destroy(Calendar $calendar): JsonResponse
     {
+        Gate::authorize('delete', $calendar);
         $calendar->delete();
 
-        return response()->json([
-            'message' => 'Evento eliminado correctamente',
-        ], 200);
+        return response()->json(['message' => 'Evento eliminado correctamente']);
+    }
+
+    private function validated(Request $request, bool $updating = false): array
+    {
+        $required = $updating ? 'sometimes' : 'required';
+        $data = $request->validate(['user_id' => 'sometimes|required|exists:users,id',
+            'name' => "$required|string|max:255", 'description' => 'nullable|string|max:255', 'due_at' => "$required|date"]);
+        if (isset($data['due_at'])) {
+            $data['due_at'] = Carbon::parse($data['due_at'])->setTimezone(config('app.timezone'));
+        }
+
+        return $data;
     }
 }

@@ -8,13 +8,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Traits\HasRoles;
+
 class Activity extends Model
 {
     /** @use HasFactory<ActivityFactory> */
     use HasFactory , HasRoles;
 
     protected $fillable = [
+        'attendance_id',
         'user_id',
         'type',
         'name',
@@ -32,6 +35,25 @@ class Activity extends Model
             'occurred_at' => 'datetime',
             'metadata' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Activity $activity): void {
+            if ($activity->getOriginal('type') === 'login' || $activity->getOriginal('attendance_id') !== null || $activity->isDirty('attendance_id')) {
+                throw ValidationException::withMessages(['description' => 'Esta actividad se modifica desde la asistencia vinculada.']);
+            }
+        });
+        static::deleting(function (Activity $activity): void {
+            if ($activity->attendance_id !== null || $activity->isLogin()) {
+                throw ValidationException::withMessages(['description' => 'Esta actividad se elimina desde la asistencia vinculada.']);
+            }
+        });
+    }
+
+    public function attendance(): BelongsTo
+    {
+        return $this->belongsTo(Attendance::class);
     }
 
     public function user(): BelongsTo

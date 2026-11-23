@@ -20,7 +20,8 @@ class ActivityInfolist
                     ->placeholder('-'),
                 TextEntry::make('name')
                     ->label('Nombre'),
-                TextEntry::make('description')
+                TextEntry::make('attendance_id')->label('Asistencia vinculada')->placeholder('Registro manual'),
+                TextEntry::make('description')->columnSpanFull()
                     ->label('Descripción')
                     ->placeholder('-'),
                 TextEntry::make('occurred_at')

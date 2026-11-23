@@ -25,27 +25,27 @@ class ExampleTest extends TestCase
     {
         $this->assertNotNull(Departament::query()->firstOrCreate(['name' => 'Sin departamento']));
 
-        $user = User::factory()->create();
-        $service = new AttendanceService();
+        $user = $this->assignAttendanceSite(User::factory()->create());
+        $service = new AttendanceService;
 
-        $attendance = $service->checkIn($user, Carbon::parse('2026-09-08 08:45'));
+        $attendance = $service->checkIn($user, Carbon::parse('2026-09-08 08:45'), location: $this->attendancePosition());
 
         $this->assertNotNull($attendance->check_in_at);
         $this->assertSame('2026-09-08', $attendance->date->toDateString());
 
         $this->expectException(ValidationException::class);
-        $service->checkIn($user, Carbon::parse('2026-09-08 09:15'));
+        $service->checkIn($user, Carbon::parse('2026-09-08 09:15'), location: $this->attendancePosition());
     }
 
     public function test_it_validates_lunch_and_checkout_sequence(): void
     {
-        $user = User::factory()->create();
-        $service = new AttendanceService();
+        $user = $this->assignAttendanceSite(User::factory()->create());
+        $service = new AttendanceService;
 
         $this->expectException(ValidationException::class);
         $service->startLunch($user, Carbon::parse('2026-09-08 12:00'));
 
-        $attendance = $service->checkIn($user, Carbon::parse('2026-09-08 08:50'));
+        $attendance = $service->checkIn($user, Carbon::parse('2026-09-08 08:50'), location: $this->attendancePosition());
         $service->startLunch($attendance, Carbon::parse('2026-09-08 12:00'));
         $service->endLunch($attendance, Carbon::parse('2026-09-08 13:00'));
 

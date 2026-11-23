@@ -4,14 +4,19 @@
             x-data="{
                 calendar: null,
                 events: @js($this->getEvents()),
+                refreshEvents(events) {
+                    this.calendar.removeAllEvents();
+                    this.calendar.addEventSource(events);
+                },
+                destroy() { this.calendar?.destroy(); },
                 init() {
                     this.calendar = new FullCalendar.Calendar(this.$refs.calendar, {
                         initialView: 'dayGridMonth',
                         locale: 'es',
                         nowIndicator: true, // Línea indicadora de hora actual
                         navLinks: true,     // Clic en los días para ir a la vista diaria
-                        editable: true,     // Permite Drag & Drop
-                        selectable: true,
+                        editable: false,     // Permite Drag & Drop
+                        selectable: @js($this->canCreateEvents()),
                         
                         headerToolbar: {
                             left: 'prev,next today',
@@ -32,31 +37,15 @@
 
                         // Modal al hacer clic en un evento
                         eventClick: (info) => {
-                            $wire.mountAction('editEvent', { id: info.event.id });
+                            $wire.mountAction(info.event.extendedProps.canEdit ? 'editEvent' : 'viewEvent', { id: info.event.id });
                         },
 
                         // Modal al hacer clic en un día libre
                         dateClick: (info) => {
-                            $wire.mountAction('createEvent', { date: info.dateStr });
+                            if (@js($this->canCreateEvents())) $wire.mountAction('createEvent', { date: info.dateStr });
                         },
 
-                        // Guardar nueva fecha al arrastrar el evento
-                        eventDrop: (info) => {
-                            $wire.updateEventDate(
-                                info.event.id, 
-                                info.event.startStr, 
-                                info.event.endStr
-                            );
-                        },
 
-                        // Guardar nueva duración al cambiar tamaño
-                        eventResize: (info) => {
-                            $wire.updateEventDate(
-                                info.event.id, 
-                                info.event.startStr, 
-                                info.event.endStr
-                            );
-                        }
                     });
                     
                     this.calendar.render();
@@ -65,6 +54,7 @@
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 transform scale-95"
             x-transition:enter-end="opacity-100 transform scale-100"
+            x-on:calendar-updated.window="refreshEvents($event.detail.events)"
             wire:ignore
         >
             <div x-ref="calendar" class="fc-custom-styled"></div>
@@ -75,6 +65,11 @@
 
     <!-- Estilos CSS para animaciones y tarjetas modernas -->
     <style>
+        @media (max-width: 640px) {
+            .fc .fc-toolbar { flex-wrap: wrap; gap: .75rem; justify-content: center; }
+            .fc .fc-toolbar-title { font-size: 1.1rem; }
+            .fc .fc-button { font-size: .75rem; padding: .3rem; }
+        }
         .fc-event {
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             border-radius: 6px !important;

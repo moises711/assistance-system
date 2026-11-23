@@ -6,6 +6,7 @@ use Database\Factories\ReportFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Traits\HasRoles;
 
 class Report extends Model
@@ -16,6 +17,11 @@ class Report extends Model
     protected $fillable = [
         'user_id',
     ];
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class, 'user_id', 'user_id');
+    }
 
     public function user(): BelongsTo
     {

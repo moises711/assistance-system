@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Widgets\RoleDashboardStats;
+use App\Filament\Widgets\MainDashboardStats;
 use App\Models\Attendance;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -67,7 +67,8 @@ class Dashboard extends BaseDashboard
                 ->color('primary')
                 ->action(function () use ($user) {
                     $today = Carbon::today()->toDateString();
-                    $now = Carbon::now()->format('H:i:s');
+                    $now = Carbon::now();
+                    $timeFormatted = $now->format('H:i:s');
 
                     $attendance = Attendance::where('user_id', $user->id)
                         ->where('date', $today)
@@ -79,23 +80,26 @@ class Dashboard extends BaseDashboard
                             'user_id' => $user->id,
                             'department_id' => $user->department_id,
                             'date' => $today,
-                            'check_in' => $now,
+                            'check_in_at' => $now,
+                            'check_in_method' => 'manual',
+                            'status' => 'presente',
                         ]);
 
                         Notification::make()
                             ->title('Entrada registrada')
-                            ->body("Marcado a las {$now}")
+                            ->body("Marcado a las {$timeFormatted}")
                             ->success()
                             ->send();
-                    } elseif (! $attendance->check_out) {
+                    } elseif (! $attendance->check_out_at) {
                         // Salida
                         $attendance->update([
-                            'check_out' => $now,
+                            'check_out_at' => $now,
+                            'check_out_method' => 'manual',
                         ]);
 
                         Notification::make()
                             ->title('Salida registrada')
-                            ->body("Marcado a las {$now}")
+                            ->body("Marcado a las {$timeFormatted}")
                             ->info()
                             ->send();
                     } else {
@@ -116,7 +120,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            RoleDashboardStats::class,
+            MainDashboardStats::class,
             AccountWidget::class,
         ];
     }

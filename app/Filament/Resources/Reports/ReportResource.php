@@ -10,17 +10,17 @@ use App\Filament\Resources\Reports\Pages\ViewReport;
 use App\Filament\Resources\Reports\Schemas\ReportForm;
 use App\Filament\Resources\Reports\Schemas\ReportInfolist;
 use App\Filament\Resources\Reports\Tables\ReportsTable;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Report;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ReportResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Report::class;
 
@@ -55,13 +55,15 @@ class ReportResource extends Resource
             //
         ];
     }
+
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->withSum('attendances as total_minutes', 'total_minutes')->withSum('attendances as late_minutes', 'late_minutes')->withCount('attendances');
         $user = auth()->user();
-        if ($user && $user->hasRole('super_admin')) {
+        if ($user && $user->isManager() && $user->can('viewAny', Report::class)) {
             return $query;
         }
+
         return $query->where('user_id', auth()->id());
     }
 

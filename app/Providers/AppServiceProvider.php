@@ -10,6 +10,7 @@ use App\Models\Hour;
 use App\Models\Report;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\WorkSite;
 use App\Policies\ActivityPolicy;
 use App\Policies\AttendancePolicy;
 use App\Policies\CalendarPolicy;
@@ -19,6 +20,7 @@ use App\Policies\ReportPolicy;
 use App\Policies\SchedulePolicy;
 use App\Policies\SecurityEventPolicy;
 use App\Policies\UserPolicy;
+use App\Policies\WorkSitePolicy;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Auth\Events\Login;
@@ -27,13 +29,13 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use WallaceMartinss\FilamentSecurity\EventLog\Models\SecurityEvent;
 
-
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Mapeo de Políticas de acceso.
      */
     protected array $policies = [
+        WorkSite::class => WorkSitePolicy::class,
         User::class => UserPolicy::class,
         Attendance::class => AttendancePolicy::class,
         Activity::class => ActivityPolicy::class,
@@ -65,7 +67,7 @@ class AppServiceProvider extends ServiceProvider
 
         // 3. Bypass de acceso total para roles administrativos
         Gate::before(function ($user, $ability) {
-            if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super_admin', 'Admin', 'admin'])) {
+            if ($user->role === 'admin' || (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super_admin', 'Admin', 'admin']))) {
                 return true;
             }
 

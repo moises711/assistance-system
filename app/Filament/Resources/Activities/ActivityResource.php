@@ -10,17 +10,18 @@ use App\Filament\Resources\Activities\Schemas\ActivityForm;
 use App\Filament\Resources\Activities\Schemas\ActivityInfolist;
 use App\Filament\Resources\Activities\Tables\ActivitiesTable;
 use App\Filament\Resources\Concerns\HasRoleBasedNavigation;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Activity;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class ActivityResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Activity::class;
 
@@ -33,6 +34,16 @@ class ActivityResource extends Resource
     protected static ?string $pluralModelLabel = 'actividades';
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function canEdit(Model $record): bool
+    {
+        return $record->attendance_id === null && ! $record->isLogin() && parent::canEdit($record);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return $record->attendance_id === null && ! $record->isLogin() && parent::canDelete($record);
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -55,14 +66,16 @@ class ActivityResource extends Resource
             //
         ];
     }
-    public static function getEloquentQuery():Builder
+
+    public static function getEloquentQuery(): Builder
     {
-            $query = parent::getEloquentQuery();
-            $user = auth()->user();
-            if($user && $user->hasRole('super_admin')){
-                return $query;
-            }
-            return $query->where('user_id', auth()->id());
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+        if ($user && $user->isManager() && $user->can('viewAny', Activity::class)) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
     }
 
     public static function getPages(): array

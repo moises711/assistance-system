@@ -8,7 +8,6 @@ use Filament\Widgets\FilamentInfoWidget;
 
 return [
     'auth_provider_model' => 'App\\Models\\User',
- 
 
     /*
     |--------------------------------------------------------------------------
@@ -29,7 +28,7 @@ return [
             'pages' => true,
             'widgets' => true,
             'resources' => true,
-            'custom_permissions' => false,
+            'custom_permissions' => true,
         ],
     ],
 
@@ -254,7 +253,10 @@ return [
     |
     */
 
-    'custom_permissions' => [],
+    'custom_permissions' => [
+        'AssignWorkSite:User' => 'Asignar sede GPS a usuarios',
+        'Correct:Attendance' => 'Corregir asistencias fuera del marcaje GPS',
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AttendanceResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Attendance::class;
 
@@ -55,18 +55,19 @@ class AttendanceResource extends Resource
             //
         ];
     }
+
     public static function getEloquentQuery(): Builder
-{
-    $query = parent::getEloquentQuery();
-    $user = auth()->user();
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
 
-    // Protegemos por si $user llega a ser null en algún contexto CLI/job
-    if ($user && $user->hasAnyRole(['super_admin', 'Super Admin'])) {
-        return $query;
+        // Protegemos por si $user llega a ser null en algún contexto CLI/job
+        if ($user && $user->isManager() && $user->can('viewAny', Attendance::class)) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
     }
-
-    return $query->where('user_id', auth()->id());
-}
 
     public static function getPages(): array
     {

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Activity;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class ActivityPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Activity');
@@ -19,7 +19,8 @@ class ActivityPolicy
 
     public function view(AuthUser $authUser, Activity $activity): bool
     {
-        return $authUser->can('View:Activity');
+        return (int) $activity->user_id === (int) $authUser->id
+            || ($authUser->isManager() && $authUser->can('View:Activity'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,12 +30,14 @@ class ActivityPolicy
 
     public function update(AuthUser $authUser, Activity $activity): bool
     {
-        return $authUser->can('Update:Activity');
+        return $activity->attendance_id === null && ! $activity->isLogin() && $authUser->can('Update:Activity')
+            && ((int) $activity->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function delete(AuthUser $authUser, Activity $activity): bool
     {
-        return $authUser->can('Delete:Activity');
+        return $activity->attendance_id === null && ! $activity->isLogin() && $authUser->can('Delete:Activity')
+            && ((int) $activity->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function deleteAny(AuthUser $authUser): bool
@@ -71,5 +74,4 @@ class ActivityPolicy
     {
         return $authUser->can('Reorder:Activity');
     }
-
 }

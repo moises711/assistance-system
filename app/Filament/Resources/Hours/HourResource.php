@@ -10,17 +10,17 @@ use App\Filament\Resources\Hours\Pages\ViewHour;
 use App\Filament\Resources\Hours\Schemas\HourForm;
 use App\Filament\Resources\Hours\Schemas\HourInfolist;
 use App\Filament\Resources\Hours\Tables\HoursTable;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Hour;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class HourResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Hour::class;
 
@@ -55,13 +55,15 @@ class HourResource extends Resource
             //
         ];
     }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
-        if ($user && $user->hasRole('super_admin')) {
+        if ($user && $user->isManager() && $user->can('viewAny', Hour::class)) {
             return $query;
         }
+
         return $query->where('user_id', auth()->id());
     }
 

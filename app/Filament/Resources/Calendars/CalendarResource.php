@@ -10,17 +10,17 @@ use App\Filament\Resources\Calendars\Schemas\CalendarForm;
 use App\Filament\Resources\Calendars\Schemas\CalendarInfolist;
 use App\Filament\Resources\Calendars\Tables\CalendarsTable;
 use App\Filament\Resources\Concerns\HasRoleBasedNavigation;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Calendar;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CalendarResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Calendar::class;
 
@@ -55,14 +55,16 @@ class CalendarResource extends Resource
             //
         ];
     }
-    public static function getEloquentQuery():Builder
+
+    public static function getEloquentQuery(): Builder
     {
-            $query = parent::getEloquentQuery();
-            $user = auth()->user();
-            if($user && $user->hasRole('super_admin')){
-                return $query;
-            }
-            return $query->where('user_id', auth()->id());
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+        if ($user && $user->isManager() && $user->can('viewAny', Calendar::class)) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
     }
 
     public static function getPages(): array

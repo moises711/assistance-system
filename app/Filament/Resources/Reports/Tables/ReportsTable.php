@@ -21,7 +21,10 @@ class ReportsTable
                     ->label('Usuario')
                     ->searchable()
                     ->sortable(),
-                    
+
+                TextColumn::make('attendances_count')->label('Jornadas')->sortable(),
+                TextColumn::make('total_minutes')->label('Horas trabajadas')->formatStateUsing(fn ($state) => round(($state ?? 0) / 60, 2))->sortable(),
+                TextColumn::make('late_minutes')->label('Minutos de tardanza')->sortable(),
                 TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()

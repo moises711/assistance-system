@@ -36,9 +36,10 @@ class User extends Authenticatable implements FilamentUser
         'qr_code',
         'is_active',
         'allows_remote',
+        'work_site_id',
         'schedule_id',
         'department_id',
-        
+
     ];
 
     /**
@@ -49,6 +50,8 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'api_token',
+        'api_token_expires_at',
     ];
 
     /**
@@ -63,7 +66,17 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'is_active' => 'boolean',
             'allows_remote' => 'boolean',
+            'require_activity_report' => 'boolean',
+            'api_token_expires_at' => 'datetime',
         ];
+    }
+
+    public function isManager(): bool
+    {
+        $role = $this->role instanceof \BackedEnum ? $this->role->value : $this->role;
+
+        return in_array($role, ['admin', 'rrhh', 'supervisor'], true)
+            || $this->hasAnyRole(['Super Admin', 'super_admin', 'Admin', 'admin', 'rrhh', 'supervisor']);
     }
 
     protected static function booted(): void
@@ -145,6 +158,11 @@ class User extends Authenticatable implements FilamentUser
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);
+    }
+
+    public function workSite(): BelongsTo
+    {
+        return $this->belongsTo(WorkSite::class);
     }
 
     public function schedule(): BelongsTo

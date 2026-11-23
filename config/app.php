@@ -65,7 +65,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'America/Lima'),
+    'attendance_qr_key' => env('ATTENDANCE_QR_KEY', 'HQ-OFICINA-CENTRAL-2026'),
 
     /*
     |--------------------------------------------------------------------------

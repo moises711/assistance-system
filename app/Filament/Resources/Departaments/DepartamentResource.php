@@ -10,17 +10,17 @@ use App\Filament\Resources\Departaments\Pages\ViewDepartament;
 use App\Filament\Resources\Departaments\Schemas\DepartamentForm;
 use App\Filament\Resources\Departaments\Schemas\DepartamentInfolist;
 use App\Filament\Resources\Departaments\Tables\DepartamentsTable;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Departament;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class DepartamentResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Departament::class;
 
@@ -55,14 +55,16 @@ class DepartamentResource extends Resource
             //
         ];
     }
-    public static function getEloquentQuery():Builder
+
+    public static function getEloquentQuery(): Builder
     {
-            $query = parent::getEloquentQuery();
-            $user = auth()->user();
-            if($user && $user->hasRole('super_admin')){
-                return $query;
-            }
-            return $query->where('user_id', auth()->id());
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+        if ($user && $user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
     }
 
     public static function getPages(): array

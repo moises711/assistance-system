@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Calendar;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class CalendarPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Calendar');
@@ -19,22 +19,25 @@ class CalendarPolicy
 
     public function view(AuthUser $authUser, Calendar $calendar): bool
     {
-        return $authUser->can('View:Calendar');
+        return (int) $calendar->user_id === (int) $authUser->id
+            || ($authUser->isManager() && $authUser->can('View:Calendar'));
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:Calendar');
+        return $authUser->isManager() && $authUser->can('Create:Calendar');
     }
 
     public function update(AuthUser $authUser, Calendar $calendar): bool
     {
-        return $authUser->can('Update:Calendar');
+        return $authUser->isManager() && $authUser->can('Update:Calendar')
+            && ((int) $calendar->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function delete(AuthUser $authUser, Calendar $calendar): bool
     {
-        return $authUser->can('Delete:Calendar');
+        return $authUser->isManager() && $authUser->can('Delete:Calendar')
+            && ((int) $calendar->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function deleteAny(AuthUser $authUser): bool
@@ -71,5 +74,4 @@ class CalendarPolicy
     {
         return $authUser->can('Reorder:Calendar');
     }
-
 }

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Hour;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class HourPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Hour');
@@ -19,7 +19,8 @@ class HourPolicy
 
     public function view(AuthUser $authUser, Hour $hour): bool
     {
-        return $authUser->can('View:Hour');
+        return (int) $hour->user_id === (int) $authUser->id
+            || ($authUser->isManager() && $authUser->can('View:Hour'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,12 +30,14 @@ class HourPolicy
 
     public function update(AuthUser $authUser, Hour $hour): bool
     {
-        return $authUser->can('Update:Hour');
+        return $authUser->can('Update:Hour')
+            && ((int) $hour->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function delete(AuthUser $authUser, Hour $hour): bool
     {
-        return $authUser->can('Delete:Hour');
+        return $authUser->can('Delete:Hour')
+            && ((int) $hour->user_id === (int) $authUser->id || $authUser->isManager());
     }
 
     public function deleteAny(AuthUser $authUser): bool
@@ -71,5 +74,4 @@ class HourPolicy
     {
         return $authUser->can('Reorder:Hour');
     }
-
 }

@@ -29,14 +29,14 @@ class RoleDashboardStats extends StatsOverviewWidget
 
             return [
                 Stat::make('Estado de hoy', $attendance?->status ?? 'Sin marcar')
-                    ->description($attendance?->start_time ? 'Entrada registrada' : 'Registra tu entrada')
+                    ->description($attendance?->check_in_at ? 'Entrada registrada' : 'Registra tu entrada')
                     ->icon(Heroicon::OutlinedCalendarDays)
                     ->color($attendance ? 'success' : 'warning'),
-                Stat::make('Horas de hoy', $attendance?->total_hours ?? 0)
+                Stat::make('Horas de hoy', round(($attendance?->total_minutes ?? 0) / 60, 2))
                     ->description('Horas registradas')
                     ->icon(Heroicon::OutlinedClock)
                     ->color('info'),
-                Stat::make('Horas extra', $attendance?->overtime ?? 0)
+                Stat::make('Horas extra', round(($attendance?->overtime_minutes ?? 0) / 60, 2))
                     ->description('Horas extra acumuladas hoy')
                     ->icon(Heroicon::OutlinedPlusCircle)
                     ->color('warning'),
@@ -54,7 +54,7 @@ class RoleDashboardStats extends StatsOverviewWidget
                 ->description('Registros del día')
                 ->icon(Heroicon::OutlinedCalendarDays)
                 ->color('info'),
-            Stat::make('Pendientes', Attendance::query()->whereDate('date', $today)->where('status', 'pending')->count())
+            Stat::make('Pendientes', Attendance::query()->whereDate('date', $today)->where('status', 'pendiente')->count())
                 ->description('Asistencias pendientes')
                 ->icon(Heroicon::OutlinedClock)
                 ->color('warning'),

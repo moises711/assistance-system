@@ -23,7 +23,7 @@ class ApiTokenAuth
         $user = User::query()->where('api_token', $token)->first();
 
         // Si prefieres seguir usando remember_token por ahora, cambia 'api_token' por 'remember_token'
-        if (! $user) {
+        if (! $user || ($user->api_token_expires_at && $user->api_token_expires_at->isPast())) {
             return response()->json(['message' => 'Token inválido o expirado.'], 401);
         }
 

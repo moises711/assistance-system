@@ -20,20 +20,21 @@ class AttendanceInfolist
                 TextEntry::make('date')
                     ->label('Fecha')
                     ->date(),
-                TextEntry::make('start_time')
+                TextEntry::make('check_in_at')
                     ->label('Inicio')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('-'),
-                TextEntry::make('end_time')
+                TextEntry::make('check_out_at')
                     ->label('Fin')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('-'),
-                TextEntry::make('total_hours')
-                    ->label('Horas totales'),
-                TextEntry::make('overtime')
-                    ->label('Horas extra'),
-                TextEntry::make('missingtime')
-                    ->label('Horas faltantes'),
+                TextEntry::make('total_minutes')
+                    ->label('Minutos trabajados'),
+                TextEntry::make('overtime_minutes')
+                    ->label('Minutos extra'),
+                TextEntry::make('missing_minutes')
+                    ->label('Minutos faltantes'),
+                TextEntry::make('daily_activity')->label('Actividad de la jornada')->placeholder('Sin actividad registrada')->columnSpanFull(),
                 TextEntry::make('status')
                     ->label('Estado')
                     ->badge(),

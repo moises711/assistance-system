@@ -25,14 +25,12 @@ class Calendar extends Model
             'due_at' => 'datetime',
         ];
     }
-    public function toCalendarEvent():Event|array
+
+    public function toCalendarEvent(): array
     {
-        return Event::make($this)
-        ->model(static::class)
-        ->id($this->id)
-        ->title($this->name)
-        ->description($this->description)
-        ->start($this->due_at)
-        ->end($this->due_at);
+        return [
+            'id' => $this->id, 'title' => $this->name, 'description' => $this->description,
+            'start' => $this->due_at?->toIso8601String(),
+        ];
     }
 }

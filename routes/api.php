@@ -8,18 +8,22 @@ use App\Http\Controllers\Api\DepartamentController;
 use App\Http\Controllers\Api\HourController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\WorkSiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
-    
+
     // Autenticación pública
     Route::post('/login', [AuthController::class, 'login']);
 
     // Rutas protegidas por el Middleware de Token
     Route::middleware('api.token')->group(function () {
-        
+
         // Perfil de usuario logueado
         Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/users', [AuthController::class, 'users']);
+        Route::apiResource('work-sites', WorkSiteController::class)->only(['index', 'store', 'update']);
 
         // Endpoints de Asistencias (Lógica de marcado de tiempos)
         Route::prefix('attendance')->group(function () {
@@ -28,8 +32,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/check-out', [AttendanceController::class, 'checkOut']);
             Route::post('/lunch/start', [AttendanceController::class, 'startLunch']);
             Route::post('/lunch/end', [AttendanceController::class, 'endLunch']);
-        // metodo para  escanear el codigo QR y registrar la asistencia
-        Route::post('/scan', [AttendanceController::class, 'scanQr']);
+            // metodo para  escanear el codigo QR y registrar la asistencia
+            Route::post('/scan', [AttendanceController::class, 'scanQr']);
         });
 
         // Recursos CRUD completos

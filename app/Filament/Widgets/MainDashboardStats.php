@@ -12,13 +12,26 @@ use Illuminate\Support\Facades\DB;
 
 class MainDashboardStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return (auth()->user()?->can('Manage:AllRecords') ?? false)
+            && (auth()->user()?->can('View:MainDashboardStats') ?? false);
+    }
+
     protected function getStats(): array
     {
         $today = Carbon::today()->toDateString();
 
-        $totalUsers = User::count();
-        $presentToday = Attendance::where('date', $today)->whereIn('status', ['presente', 'tarde'])->count();
-        $departmentsCount = DB::table('departaments')->count();
+        $actor = auth()->user();
+        $users = User::query();
+        $attendances = Attendance::where('date', $today)->whereIn('status', ['presente', 'tarde']);
+        $actor?->applyTeamScopeTo($users, 'users.id');
+        $actor?->applyTeamScopeTo($attendances, 'attendances.user_id');
+        $totalUsers = $users->count();
+        $presentToday = $attendances->count();
+        $departmentsCount = $actor?->isSuperAdmin()
+            ? DB::table('departaments')->count()
+            : (int) ($actor?->department_id !== null ? 1 : 0);
 
         return [
             Stat::make('Total Usuarios', $totalUsers)

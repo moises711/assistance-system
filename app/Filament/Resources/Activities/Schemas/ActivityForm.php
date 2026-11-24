@@ -16,8 +16,7 @@ class ActivityForm
     {
         return $schema->columns(['default' => 1, 'md' => 2])->components([
             Select::make('user_id')->label('Usuario')->required()->default(fn () => auth()->id())
-                ->options(fn () => auth()->user()?->isManager() && auth()->user()?->can('viewAny', User::class)
-                    ? User::orderBy('name')->pluck('name', 'id') : User::whereKey(auth()->id())->pluck('name', 'id'))
+                ->options(fn () => User::query()->tap(fn ($query) => auth()->user()?->applyTeamScopeTo($query, 'users.id'))->orderBy('name')->pluck('name', 'id'))
                 ->searchable(),
             Hidden::make('type')->default('work'),
             TextInput::make('name')->label('Nombre de la actividad')->required()->maxLength(255),

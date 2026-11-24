@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Departament;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DepartamentPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Departament');
@@ -19,47 +19,50 @@ class DepartamentPolicy
 
     public function view(AuthUser $authUser, Departament $departament): bool
     {
-        return $authUser->can('View:Departament');
+        return $authUser->isSuperAdmin()
+            || ($authUser->can('View:Departament')
+                && ((int) $authUser->department_id === (int) $departament->id
+                    || $authUser->canManageDepartmentId((int) $departament->id)));
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:Departament');
+        return $authUser->isSuperAdmin();
     }
 
     public function update(AuthUser $authUser, Departament $departament): bool
     {
-        return $authUser->can('Update:Departament');
+        return $authUser->isSuperAdmin();
     }
 
     public function delete(AuthUser $authUser, Departament $departament): bool
     {
-        return $authUser->can('Delete:Departament');
+        return $authUser->isSuperAdmin();
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:Departament');
+        return false;
     }
 
     public function restore(AuthUser $authUser, Departament $departament): bool
     {
-        return $authUser->can('Restore:Departament');
+        return false;
     }
 
     public function forceDelete(AuthUser $authUser, Departament $departament): bool
     {
-        return $authUser->can('ForceDelete:Departament');
+        return false;
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Departament');
+        return false;
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Departament');
+        return false;
     }
 
     public function replicate(AuthUser $authUser, Departament $departament): bool
@@ -71,5 +74,4 @@ class DepartamentPolicy
     {
         return $authUser->can('Reorder:Departament');
     }
-
 }

@@ -26,7 +26,7 @@ class DashboardEmpleado extends Page
             return false;
         }
 
-        return $user->hasRole('super_admin') || $user->can('page_DashboardEmpleado');
+        return $user->can('View:DashboardEmpleado');
     }
 
     public function getHeaderWidgets(): array
@@ -48,6 +48,7 @@ class DashboardEmpleado extends Page
         return [
             Action::make('entrada')->label('Registrar entrada')->icon('heroicon-o-arrow-right-on-rectangle')
                 ->visible(! $attendance?->check_in_at)
+                ->authorize(fn (): bool => $user->can('Create:Attendance'))
                 ->schema([ViewField::make('location')->view('filament.forms.gps-location')->extraAttributes(['data-auto-capture' => true])->required()])
                 ->action(function (array $data) use ($user, $service): void {
                     $service->checkIn($user, method: 'web', location: $data['location'] ?? null);
@@ -56,12 +57,14 @@ class DashboardEmpleado extends Page
                 }),
             Action::make('almuerzo')->label('Iniciar almuerzo')
                 ->visible((bool) $attendance?->check_in_at && ! $attendance?->lunch_start_at && ! $attendance?->check_out_at)
+                ->authorize(fn (): bool => $user->can('Update:Attendance'))
                 ->requiresConfirmation()->action(function () use ($user, $service): void {
                     $service->startLunch($user);
                     $this->redirect(static::getUrl());
                 }),
             Action::make('finAlmuerzo')->label('Finalizar almuerzo')
                 ->visible((bool) $attendance?->lunch_start_at && ! $attendance?->lunch_end_at && ! $attendance?->check_out_at)
+                ->authorize(fn (): bool => $user->can('Update:Attendance'))
                 ->requiresConfirmation()->action(function () use ($user, $service): void {
                     $service->endLunch($user);
                     $this->redirect(static::getUrl());
@@ -69,6 +72,7 @@ class DashboardEmpleado extends Page
             Action::make('salida')->label('Registrar salida')->color('warning')
                 ->visible((bool) $attendance?->check_in_at && ! $attendance?->check_out_at
                     && (! $attendance?->lunch_start_at || (bool) $attendance?->lunch_end_at))
+                ->authorize(fn (): bool => $user->can('Update:Attendance'))
                 ->schema([ViewField::make('location')->view('filament.forms.gps-location')->extraAttributes(['data-auto-capture' => true])->required(), Textarea::make('notes')->label('Actividad realizada')
                     ->required($user->require_activity_report)->maxLength(10000)->rows(3)])
                 ->fillForm(['notes' => $attendance?->daily_activity])

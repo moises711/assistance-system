@@ -7,8 +7,6 @@ use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 
 return [
-    'auth_provider_model' => 'App\\Models\\User',
-
     /*
     |--------------------------------------------------------------------------
     | Shield Resource
@@ -255,7 +253,14 @@ return [
 
     'custom_permissions' => [
         'AssignWorkSite:User' => 'Asignar sede GPS a usuarios',
+        'AssignRoles:User' => 'Asignar roles permitidos a usuarios',
+        'Manage:UserSecurity' => 'Administrar acceso y seguridad de usuarios',
+        'Deactivate:User' => 'Desactivar usuarios del equipo sin borrar su historial',
+        'SendInvitation:User' => 'Enviar invitaciones y enlaces de restablecimiento',
+        'Manage:AttendanceSettings:User' => 'Administrar reglas de asistencia de usuarios',
+        'View:SupervisorDashboard' => 'Ver panel de supervisión',
         'Correct:Attendance' => 'Corregir asistencias fuera del marcaje GPS',
+        'Manage:AllRecords' => 'Gestionar y ver registros de todos los usuarios',
     ],
 
     /*

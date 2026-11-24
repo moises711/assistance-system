@@ -60,8 +60,8 @@ class ReportResource extends Resource
     {
         $query = parent::getEloquentQuery()->withSum('attendances as total_minutes', 'total_minutes')->withSum('attendances as late_minutes', 'late_minutes')->withCount('attendances');
         $user = auth()->user();
-        if ($user && $user->isManager() && $user->can('viewAny', Report::class)) {
-            return $query;
+        if ($user && $user->can('viewAny', Report::class)) {
+            return $user->applyTeamScopeTo($query, 'reports.user_id');
         }
 
         return $query->where('user_id', auth()->id());

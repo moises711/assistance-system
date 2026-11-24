@@ -10,7 +10,6 @@ use App\Filament\Resources\Schedules\Pages\ViewSchedule;
 use App\Filament\Resources\Schedules\Schemas\ScheduleForm;
 use App\Filament\Resources\Schedules\Schemas\ScheduleInfolist;
 use App\Filament\Resources\Schedules\Tables\SchedulesTable;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Schedule;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -20,7 +19,7 @@ use Filament\Tables\Table;
 
 class ScheduleResource extends Resource
 {
-    //use HasRoleBasedNavigation;
+    // use HasRoleBasedNavigation;
 
     protected static ?string $model = Schedule::class;
 
@@ -52,15 +51,6 @@ class ScheduleResource extends Resource
     public static function getRelations(): array
     {
         return [];
-    }
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-        $user = auth()->user();
-        if ($user && $user->hasRole('super_admin')) {
-            return $query;
-        }
-        return $query->where('user_id', auth()->id());
     }
 
     public static function getPages(): array

@@ -18,7 +18,7 @@ class Rrhh extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && ($user->isHumanResources() || $user->isAdmin());
+        return $user instanceof User && $user->can('View:Rrhh');
     }
 
     protected function getHeaderWidgets(): array

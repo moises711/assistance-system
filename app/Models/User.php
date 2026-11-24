@@ -8,8 +8,10 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\Writer\SvgWriter;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -71,12 +73,79 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    /**
+     * Determines whether the user can manage records across the organization.
+     */
     public function isManager(): bool
     {
-        $role = $this->role instanceof \BackedEnum ? $this->role->value : $this->role;
+        return $this->isSuperAdmin() || $this->can('Manage:AllRecords');
+    }
 
-        return in_array($role, ['admin', 'rrhh', 'supervisor'], true)
-            || $this->hasAnyRole(['Super Admin', 'super_admin', 'Admin', 'admin', 'rrhh', 'supervisor']);
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(config('filament-shield.super_admin.name', 'super_admin'));
+    }
+
+    public function canManageUser(User $target): bool
+    {
+        if ((int) $this->id === (int) $target->id || $this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->isManager()
+            && $target->department_id !== null
+            && in_array((int) $target->department_id, $this->managedDepartmentIds(), true);
+    }
+
+    public function canManageUserId(int $userId): bool
+    {
+        if ((int) $this->id === $userId) {
+            return true;
+        }
+
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->isManager()
+            && static::query()->whereKey($userId)->whereIn('department_id', $this->managedDepartmentIds())->exists();
+    }
+
+    /** @return list<int> */
+    public function managedDepartmentIds(): array
+    {
+        $ids = $this->departmentsManaged()->pluck('departaments.id')->map(fn ($id): int => (int) $id)->all();
+
+        if ($ids === [] && $this->department_id !== null) {
+            $ids[] = (int) $this->department_id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    public function canManageDepartmentId(?int $departmentId): bool
+    {
+        return $this->isSuperAdmin()
+            || ($departmentId !== null
+                && $this->isManager()
+                && in_array($departmentId, $this->managedDepartmentIds(), true));
+    }
+
+    public function applyTeamScopeTo(EloquentBuilder $query, string $ownerIdColumn = 'user_id'): EloquentBuilder
+    {
+        if ($this->isSuperAdmin()) {
+            return $query;
+        }
+
+        $departmentIds = $this->managedDepartmentIds();
+
+        if ($this->isManager() && $departmentIds !== []) {
+            return $query->whereIn($ownerIdColumn, static::query()
+                ->select('id')
+                ->whereIn('department_id', $departmentIds));
+        }
+
+        return $query->where($ownerIdColumn, $this->id);
     }
 
     protected static function booted(): void
@@ -115,31 +184,32 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Helpers de verificación basados exclusivamente en roles de Spatie/Shield.
+     * Compatibility helpers based on permissions rather than fixed role names.
      */
     public function isAdmin(): bool
     {
-        return $this->hasAnyRole(['super_admin', 'Admin']);
+        return $this->hasRole(config('filament-shield.super_admin.name', 'super_admin'))
+            || $this->can('Manage:AllRecords');
     }
 
     public function isHumanResources(): bool
     {
-        return $this->hasRole('HumanResources');
+        return $this->can('View:Rrhh');
     }
 
     public function isSupervisor(): bool
     {
-        return $this->hasRole('Supervisor');
+        return $this->can('View:SupervisorDashboard');
     }
 
     public function isEmployee(): bool
     {
-        return $this->hasRole('Empleados');
+        return $this->can('View:DashboardEmpleado');
     }
 
     public function isIntern(): bool
     {
-        return $this->hasRole('Intern');
+        return $this->isEmployee();
     }
 
     /**
@@ -148,6 +218,17 @@ class User extends Authenticatable implements FilamentUser
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Departament::class, 'department_id');
+    }
+
+    public function departmentsManaged(): BelongsToMany
+    {
+        return $this->belongsToMany(Departament::class, 'department_manager', 'manager_id', 'department_id')
+            ->withTimestamps();
     }
 
     public function hours(): HasMany

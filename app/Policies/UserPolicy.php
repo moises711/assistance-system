@@ -2,71 +2,94 @@
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class UserPolicy
 {
     use HandlesAuthorization;
-    
-    public function viewAny(AuthUser $authUser): bool
+
+    public function viewAny(User $authUser): bool
     {
         return $authUser->can('ViewAny:User');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(User $authUser, User $user): bool
     {
-        return $authUser->can('View:User');
+        return $authUser->canManageUser($user)
+            && ((int) $authUser->id === (int) $user->id || $authUser->can('View:User'));
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(User $authUser): bool
     {
-        return $authUser->can('Create:User');
+        return $authUser->isManager()
+            && $authUser->can('Create:User')
+            && ($authUser->isSuperAdmin() || $authUser->managedDepartmentIds() !== []);
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(User $authUser, User $user): bool
     {
-        return $authUser->can('Update:User');
+        return $authUser->can('Update:User')
+            && $authUser->canManageUser($user)
+            && $this->canManageUserPrivileges($authUser, $user);
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(User $authUser, User $user): bool
     {
-        return $authUser->can('Delete:User');
+        return false;
     }
 
-    public function deleteAny(AuthUser $authUser): bool
+    public function deleteAny(User $authUser): bool
     {
-        return $authUser->can('DeleteAny:User');
+        return false;
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(User $authUser, User $user): bool
     {
-        return $authUser->can('Restore:User');
+        return false;
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(User $authUser, User $user): bool
     {
-        return $authUser->can('ForceDelete:User');
+        return false;
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(User $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:User');
+        return false;
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(User $authUser): bool
     {
-        return $authUser->can('RestoreAny:User');
+        return false;
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(User $authUser, User $user): bool
     {
-        return $authUser->can('Replicate:User');
+        return $authUser->isManager() && $authUser->can('Replicate:User')
+            && $authUser->canManageUser($user);
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(User $authUser): bool
     {
-        return $authUser->can('Reorder:User');
+        return $authUser->isManager() && $authUser->can('Reorder:User');
     }
 
+    private function canManageUserPrivileges(User $authUser, User $user): bool
+    {
+        $superAdminRole = config('filament-shield.super_admin.name', 'super_admin');
+
+        if ($user->hasRole($superAdminRole)) {
+            return $authUser->hasRole($superAdminRole);
+        }
+
+        if ($authUser->hasRole($superAdminRole)) {
+            return true;
+        }
+
+        $actorPermissions = $authUser->getAllPermissions()->pluck('name');
+        $targetPermissions = $user->getAllPermissions()->pluck('name');
+
+        return $targetPermissions->diff($actorPermissions)->isEmpty();
+    }
 }

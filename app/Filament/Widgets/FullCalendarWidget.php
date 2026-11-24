@@ -21,6 +21,12 @@ class FullCalendarWidget extends Widget implements HasActions, HasSchemas
     use InteractsWithActions;
     use InteractsWithSchemas;
 
+    public static function canView(): bool
+    {
+        return (auth()->user()?->can('View:FullCalendarWidget') ?? false)
+            && Gate::allows('viewAny', Calendar::class);
+    }
+
     protected string $view = 'filament.widgets.full-calendar-widget';
 
     protected int|string|array $columnSpan = 'full';
@@ -28,7 +34,10 @@ class FullCalendarWidget extends Widget implements HasActions, HasSchemas
     public function getEvents(): array
     {
         $query = Calendar::query()->whereNotNull('due_at');
-        if (! auth()->user()?->isManager() || ! Gate::allows('viewAny', Calendar::class)) {
+        $user = auth()->user();
+        if ($user && Gate::allows('viewAny', Calendar::class)) {
+            $user->applyTeamScopeTo($query, 'calendars.user_id');
+        } else {
             $query->where('user_id', auth()->id());
         }
 

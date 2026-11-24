@@ -20,7 +20,7 @@ class ResourceAuthorizationTest extends TestCase
 
     public function test_activity_crud_returns_valid_json_and_is_scoped(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'api_token' => 'admin']);
+        $admin = $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin']);
         $headers = ['Authorization' => 'Bearer admin'];
         $response = $this->postJson('/api/v1/activities', [
             'user_id' => $admin->id, 'type' => 'work', 'name' => 'Inventario', 'occurred_at' => now()->toIso8601String(),

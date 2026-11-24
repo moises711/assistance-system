@@ -19,8 +19,8 @@ class HourPolicy
 
     public function view(AuthUser $authUser, Hour $hour): bool
     {
-        return (int) $hour->user_id === (int) $authUser->id
-            || ($authUser->isManager() && $authUser->can('View:Hour'));
+        return $authUser->canManageUserId((int) $hour->user_id)
+            && ((int) $hour->user_id === (int) $authUser->id || $authUser->can('View:Hour'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -31,38 +31,38 @@ class HourPolicy
     public function update(AuthUser $authUser, Hour $hour): bool
     {
         return $authUser->can('Update:Hour')
-            && ((int) $hour->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $hour->user_id);
     }
 
     public function delete(AuthUser $authUser, Hour $hour): bool
     {
         return $authUser->can('Delete:Hour')
-            && ((int) $hour->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $hour->user_id);
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:Hour');
+        return $authUser->isManager() && $authUser->can('DeleteAny:Hour');
     }
 
     public function restore(AuthUser $authUser, Hour $hour): bool
     {
-        return $authUser->can('Restore:Hour');
+        return $authUser->isManager() && $authUser->can('Restore:Hour');
     }
 
     public function forceDelete(AuthUser $authUser, Hour $hour): bool
     {
-        return $authUser->can('ForceDelete:Hour');
+        return $authUser->isManager() && $authUser->can('ForceDelete:Hour');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Hour');
+        return $authUser->isManager() && $authUser->can('ForceDeleteAny:Hour');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Hour');
+        return $authUser->isManager() && $authUser->can('RestoreAny:Hour');
     }
 
     public function replicate(AuthUser $authUser, Hour $hour): bool

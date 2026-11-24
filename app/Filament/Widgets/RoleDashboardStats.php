@@ -11,6 +11,11 @@ use Illuminate\Support\Carbon;
 
 class RoleDashboardStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:RoleDashboardStats') ?? false;
+    }
+
     protected ?string $heading = 'Resumen del sistema';
 
     protected function getStats(): array
@@ -21,7 +26,7 @@ class RoleDashboardStats extends StatsOverviewWidget
             return [];
         }
 
-        if ($user->isEmployee() || $user->isIntern()) {
+        if (! $user->isManager()) {
             $attendance = Attendance::query()
                 ->where('user_id', $user->id)
                 ->whereDate('date', today())
@@ -44,17 +49,21 @@ class RoleDashboardStats extends StatsOverviewWidget
         }
 
         $today = Carbon::today();
+        $users = User::query()->where('is_active', true);
+        $attendances = Attendance::query()->whereDate('date', $today);
+        $user->applyTeamScopeTo($users, 'users.id');
+        $user->applyTeamScopeTo($attendances, 'attendances.user_id');
 
         return [
-            Stat::make('Usuarios activos', User::query()->where('is_active', true)->count())
+            Stat::make('Usuarios activos', $users->count())
                 ->description('Usuarios habilitados')
                 ->icon(Heroicon::OutlinedUsers)
                 ->color('success'),
-            Stat::make('Asistencias de hoy', Attendance::query()->whereDate('date', $today)->count())
+            Stat::make('Asistencias de hoy', (clone $attendances)->count())
                 ->description('Registros del día')
                 ->icon(Heroicon::OutlinedCalendarDays)
                 ->color('info'),
-            Stat::make('Pendientes', Attendance::query()->whereDate('date', $today)->where('status', 'pendiente')->count())
+            Stat::make('Pendientes', $attendances->where('status', 'pendiente')->count())
                 ->description('Asistencias pendientes')
                 ->icon(Heroicon::OutlinedClock)
                 ->color('warning'),

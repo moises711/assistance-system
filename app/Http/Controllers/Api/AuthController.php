@@ -92,7 +92,10 @@ class AuthController extends Controller
         abort_unless($request->user()->isManager(), 403);
         Gate::authorize('viewAny', User::class);
 
-        return response()->json(User::orderBy('name')->get(['id', 'name', 'department_id', 'require_activity_report']));
+        $users = User::query();
+        $request->user()->applyTeamScopeTo($users, 'users.id');
+
+        return response()->json($users->orderBy('name')->get(['id', 'name', 'department_id', 'require_activity_report']));
     }
 
     private function capabilities(User $user): array

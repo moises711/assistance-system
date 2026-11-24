@@ -18,7 +18,7 @@ class AdminDashboard extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->isAdmin();
+        return $user instanceof User && $user->can('View:AdminDashboard');
     }
 
     protected function getHeaderWidgets(): array

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Activity;
 use App\Models\Attendance;
+use App\Models\AuditLog;
 use App\Models\Calendar;
 use App\Models\Departament;
 use App\Models\Hour;
@@ -13,20 +14,24 @@ use App\Models\User;
 use App\Models\WorkSite;
 use App\Policies\ActivityPolicy;
 use App\Policies\AttendancePolicy;
+use App\Policies\AuditLogPolicy;
 use App\Policies\CalendarPolicy;
 use App\Policies\DepartamentPolicy;
 use App\Policies\HourPolicy;
 use App\Policies\ReportPolicy;
+use App\Policies\RolePolicy;
 use App\Policies\SchedulePolicy;
 use App\Policies\SecurityEventPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\WorkSitePolicy;
+use App\Services\AttendanceObserver;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Role;
 use WallaceMartinss\FilamentSecurity\EventLog\Models\SecurityEvent;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,7 +40,9 @@ class AppServiceProvider extends ServiceProvider
      * Mapeo de Políticas de acceso.
      */
     protected array $policies = [
+        AuditLog::class => AuditLogPolicy::class,
         WorkSite::class => WorkSitePolicy::class,
+        Role::class => RolePolicy::class,
         User::class => UserPolicy::class,
         Attendance::class => AttendancePolicy::class,
         Activity::class => ActivityPolicy::class,
@@ -55,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Attendance::observe(AttendanceObserver::class);
+
         // 1. Registro de scripts
         FilamentAsset::register([
             Js::make('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'),
@@ -65,16 +74,7 @@ class AppServiceProvider extends ServiceProvider
             Gate::policy($model, $policy);
         }
 
-        // 3. Bypass de acceso total para roles administrativos
-        Gate::before(function ($user, $ability) {
-            if ($user->role === 'admin' || (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super_admin', 'Admin', 'admin']))) {
-                return true;
-            }
-
-            return null;
-        });
-
-        // 4. Registrar evento de Login
+        // 3. Registrar evento de Login
         Event::listen(Login::class, function (Login $event): void {
             Activity::create([
                 'user_id' => $event->user->getAuthIdentifier(),

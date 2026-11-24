@@ -60,8 +60,8 @@ class HourResource extends Resource
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
-        if ($user && $user->isManager() && $user->can('viewAny', Hour::class)) {
-            return $query;
+        if ($user && $user->can('viewAny', Hour::class)) {
+            return $user->applyTeamScopeTo($query, 'hours.user_id');
         }
 
         return $query->where('user_id', auth()->id());

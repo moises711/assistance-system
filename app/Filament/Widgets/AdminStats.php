@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Widgets;
 
 use App\Models\User;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\DB;
 
 class AdminStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return (auth()->user()?->isSuperAdmin() ?? false)
+            && (auth()->user()?->can('View:AdminStats') ?? false);
+    }
+
     protected function getStats(): array
     {
         $usersCount = User::count();

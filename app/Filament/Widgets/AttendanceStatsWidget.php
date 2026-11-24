@@ -9,6 +9,11 @@ use Illuminate\Support\Carbon;
 
 class AttendanceStatsWidget extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:AttendanceStatsWidget') ?? false;
+    }
+
     protected function getStats(): array
     {
         $user = auth()->user();

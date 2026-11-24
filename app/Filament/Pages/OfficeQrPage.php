@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -16,6 +17,16 @@ class OfficeQrPage extends Page
     protected static ?string $title = 'Cartel QR de Asistencia - Oficina';
 
     protected string $view = 'filament.pages.office-qr-page'; // <-- Sin 'static'
+
+    /**
+     * La página solo es visible/accesible si el rol tiene el permiso de Shield.
+     */
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->can('View:OfficeQrPage');
+    }
 
     protected function getHeaderActions(): array
     {

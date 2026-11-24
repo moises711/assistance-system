@@ -13,9 +13,9 @@ class CreateActivity extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $user = auth()->user();
-        if (! $user->isManager() || ! $user->can('viewAny', User::class)) {
-            $data['user_id'] = $user->id;
-        }
+        $ownerId = (int) ($data['user_id'] ?? $user->id);
+        abort_unless($user->canManageUserId($ownerId), 403);
+        $data['user_id'] = $user->isManager() && $user->can('viewAny', User::class) ? $ownerId : $user->id;
         $data['type'] = 'work';
 
         return $data;

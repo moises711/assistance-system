@@ -114,7 +114,7 @@ class AttendanceGpsTest extends TestCase
         $this->employee();
         $data = ['name' => 'Oficina', 'radius_meters' => 100, 'location' => $this->attendancePosition()];
         $this->postJson('/api/v1/work-sites', $data, $this->headers())->assertForbidden();
-        $admin = User::factory()->create(['role' => 'admin', 'api_token' => 'admin']);
+        $admin = $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin']);
         $headers = ['Authorization' => 'Bearer admin'];
         $response = $this->postJson('/api/v1/work-sites', $data, $headers)->assertCreated()->assertJsonPath('captured_by', $admin->id);
         $site = $response->json('id');
@@ -133,7 +133,7 @@ class AttendanceGpsTest extends TestCase
 
     public function test_web_site_capture_saves_the_administrator_position(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = $this->createPrincipalAdmin(['role' => 'admin']);
         $this->actingAs($admin);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         Livewire::test(ManageWorkSites::class)

@@ -16,10 +16,13 @@ class AttendanceForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->columns(['default' => 1, 'md' => 2])->components([
-            Select::make('user_id')->label('Usuario')->options(fn () => User::orderBy('name')->pluck('name', 'id'))
+            Select::make('user_id')->label('Usuario')->options(fn () => User::query()->tap(fn ($query) => auth()->user()?->applyTeamScopeTo($query, 'users.id'))->orderBy('name')->pluck('name', 'id'))
+                ->default(fn () => auth()->id())
+                ->disabled(fn (): bool => ! auth()->user()?->isManager())
                 ->searchable()->preload()->live()->required(),
             Select::make('department_id')->label('Departamento')->options(fn () => Departament::orderBy('name')->pluck('name', 'id'))
-                ->searchable()->preload(),
+                ->default(fn () => auth()->user()?->department_id)
+                ->disabled()->dehydrated(),
             DatePicker::make('date')->label('Fecha')->required(),
             Textarea::make('daily_activity')->label('Actividad de la jornada')->rows(3)->maxLength(10000)
                 ->required(fn (Get $get): bool => filled($get('check_out_at')) && (bool) User::find($get('user_id'))?->require_activity_report)

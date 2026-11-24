@@ -19,8 +19,8 @@ class ReportPolicy
 
     public function view(AuthUser $authUser, Report $report): bool
     {
-        return (int) $report->user_id === (int) $authUser->id
-            || ($authUser->isManager() && $authUser->can('View:Report'));
+        return $authUser->canManageUserId((int) $report->user_id)
+            && ((int) $report->user_id === (int) $authUser->id || $authUser->can('View:Report'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -31,38 +31,38 @@ class ReportPolicy
     public function update(AuthUser $authUser, Report $report): bool
     {
         return $authUser->can('Update:Report')
-            && ((int) $report->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $report->user_id);
     }
 
     public function delete(AuthUser $authUser, Report $report): bool
     {
         return $authUser->can('Delete:Report')
-            && ((int) $report->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $report->user_id);
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:Report');
+        return $authUser->isManager() && $authUser->can('DeleteAny:Report');
     }
 
     public function restore(AuthUser $authUser, Report $report): bool
     {
-        return $authUser->can('Restore:Report');
+        return $authUser->isManager() && $authUser->can('Restore:Report');
     }
 
     public function forceDelete(AuthUser $authUser, Report $report): bool
     {
-        return $authUser->can('ForceDelete:Report');
+        return $authUser->isManager() && $authUser->can('ForceDelete:Report');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Report');
+        return $authUser->isManager() && $authUser->can('ForceDeleteAny:Report');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Report');
+        return $authUser->isManager() && $authUser->can('RestoreAny:Report');
     }
 
     public function replicate(AuthUser $authUser, Report $report): bool

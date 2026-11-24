@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use WallaceMartinss\FilamentSecurity\EventLog\Models\SecurityEvent;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
 class SecurityEventPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:SecurityEvent');
@@ -39,27 +39,27 @@ class SecurityEventPolicy
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:SecurityEvent');
+        return $authUser->isManager() && $authUser->can('DeleteAny:SecurityEvent');
     }
 
     public function restore(AuthUser $authUser, SecurityEvent $securityEvent): bool
     {
-        return $authUser->can('Restore:SecurityEvent');
+        return $authUser->isManager() && $authUser->can('Restore:SecurityEvent');
     }
 
     public function forceDelete(AuthUser $authUser, SecurityEvent $securityEvent): bool
     {
-        return $authUser->can('ForceDelete:SecurityEvent');
+        return $authUser->isManager() && $authUser->can('ForceDelete:SecurityEvent');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:SecurityEvent');
+        return $authUser->isManager() && $authUser->can('ForceDeleteAny:SecurityEvent');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:SecurityEvent');
+        return $authUser->isManager() && $authUser->can('RestoreAny:SecurityEvent');
     }
 
     public function replicate(AuthUser $authUser, SecurityEvent $securityEvent): bool
@@ -71,5 +71,4 @@ class SecurityEventPolicy
     {
         return $authUser->can('Reorder:SecurityEvent');
     }
-
 }

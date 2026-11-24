@@ -10,19 +10,29 @@ use Illuminate\Support\Carbon;
 
 class RrhhStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:RrhhStats') ?? false;
+    }
+
     protected function getStats(): array
     {
         $today = Carbon::today()->toDateString();
+        $actor = auth()->user();
+        $attendances = Attendance::query();
+        $users = User::query();
+        $actor?->applyTeamScopeTo($attendances, 'attendances.user_id');
+        $actor?->applyTeamScopeTo($users, 'users.id');
 
-        $presentToday = Attendance::where('date', $today)
+        $presentToday = (clone $attendances)->where('date', $today)
             ->whereIn('status', ['presente', 'tarde'])
             ->count();
 
-        $lateToday = Attendance::where('date', $today)
+        $lateToday = (clone $attendances)->where('date', $today)
             ->where('late_minutes', '>', 0)
             ->count();
 
-        $totalActiveUsers = User::where('is_active', 1)->count();
+        $totalActiveUsers = $users->where('is_active', 1)->count();
 
         return [
             Stat::make('Presentes Hoy', $presentToday)

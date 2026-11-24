@@ -73,7 +73,7 @@ class AttendanceActivityIntegrationTest extends TestCase
         $service->checkIn($user, location: $this->attendancePosition());
         $attendance = $service->checkOut($user, location: $this->attendancePosition(), notes: 'Antes');
         $activityId = Activity::firstOrFail()->id;
-        $admin = User::factory()->create(['role' => 'admin', 'api_token' => 'admin']);
+        $admin = $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin']);
         $headers = ['Authorization' => 'Bearer admin'];
         $this->patchJson('/api/v1/attendances/'.$attendance->id, ['daily_activity' => 'Corregida'], $headers)->assertOk();
         $this->assertDatabaseCount('activities', 1);
@@ -92,7 +92,7 @@ class AttendanceActivityIntegrationTest extends TestCase
         $attendance = $service->checkOut($user, location: $this->attendancePosition(), notes: 'Inventario');
         $activity = Activity::firstOrFail();
         Hour::factory()->create(['activity_id' => $activity->id, 'user_id' => $user->id]);
-        User::factory()->create(['role' => 'admin', 'api_token' => 'admin']);
+        $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin']);
         $headers = ['Authorization' => 'Bearer admin'];
         $this->deleteJson('/api/v1/attendances/'.$attendance->id, [], $headers)->assertUnprocessable();
         $this->patchJson('/api/v1/attendances/'.$attendance->id, ['daily_activity' => null], $headers)->assertUnprocessable();
@@ -125,7 +125,7 @@ class AttendanceActivityIntegrationTest extends TestCase
 
     public function test_manual_activity_cannot_forge_login_or_security_context(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'api_token' => 'admin']);
+        $user = $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin']);
         $headers = ['Authorization' => 'Bearer admin'];
         $payload = ['user_id' => $user->id, 'type' => 'login', 'name' => 'Falso inicio', 'occurred_at' => now()->toIso8601String()];
         $this->postJson('/api/v1/activities', $payload, $headers)->assertUnprocessable();
@@ -141,7 +141,7 @@ class AttendanceActivityIntegrationTest extends TestCase
 
     public function test_web_activity_form_supplies_owner_type_and_date(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = $this->createPrincipalAdmin(['role' => 'admin']);
         $this->actingAs($user);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         Livewire::test(CreateActivity::class)

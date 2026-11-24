@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
             ->registration()
             ->colors([
                 'primary' => Color::Amber,
@@ -47,13 +48,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 CalendarPlugin::make(),
-                
+
                 // Configuración encadenada correctamente dentro de la instanciación del plugin
                 FilamentSecurityPlugin::make()
                     ->disposableEmailProtection()
                     ->honeypotProtection()
                     ->eventLog(),
-                    
+
                 FilamentShieldPlugin::make(),
             ])
             ->middleware([

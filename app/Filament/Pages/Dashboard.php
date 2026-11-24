@@ -12,6 +12,7 @@ use Filament\Widgets\AccountWidget;
 use Filament\Widgets\Widget;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 
 class Dashboard extends BaseDashboard
 {
@@ -19,33 +20,14 @@ class Dashboard extends BaseDashboard
 
     protected static ?string $title = 'Panel de control';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('View:Dashboard') ?? false;
+    }
+
     public function getTitle(): string|Htmlable
     {
-        $user = auth()->user();
-
-        if ($user instanceof User) {
-            if ($user->isAdmin()) {
-                return 'Panel administrativo';
-            }
-
-            if ($user->isHumanResources()) {
-                return 'Panel de recursos humanos';
-            }
-
-            if ($user->isSupervisor()) {
-                return 'Panel del supervisor';
-            }
-
-            if ($user->isEmployee()) {
-                return 'Mi asistencia';
-            }
-
-            if ($user->isIntern()) {
-                return 'Mi práctica';
-            }
-        }
-
-        return parent::getTitle();
+        return 'Panel de control';
     }
 
     /**
@@ -55,16 +37,22 @@ class Dashboard extends BaseDashboard
     {
         $user = auth()->user();
 
-        // Validamos usando los métodos helper creados en User.php
-        if (! $user instanceof User || (! $user->isEmployee() && ! $user->isIntern())) {
+        if (! $user instanceof User) {
             return [];
         }
+
+        $today = Carbon::today()->toDateString();
+        $hasAttendanceToday = Attendance::query()
+            ->where('user_id', $user->id)
+            ->where('date', $today)
+            ->exists();
 
         return [
             Action::make('marcarAsistencia')
                 ->label('Marcar Asistencia')
                 ->icon('heroicon-o-clock')
                 ->color('primary')
+                ->authorize(fn (): bool => $user->can($hasAttendanceToday ? 'Update:Attendance' : 'Create:Attendance'))
                 ->action(function () use ($user) {
                     $today = Carbon::today()->toDateString();
                     $now = Carbon::now();
@@ -75,6 +63,7 @@ class Dashboard extends BaseDashboard
                         ->first();
 
                     if (! $attendance) {
+                        Gate::authorize('Create:Attendance');
                         // Entrada
                         Attendance::create([
                             'user_id' => $user->id,
@@ -91,6 +80,7 @@ class Dashboard extends BaseDashboard
                             ->success()
                             ->send();
                     } elseif (! $attendance->check_out_at) {
+                        Gate::authorize('Update:Attendance');
                         // Salida
                         $attendance->update([
                             'check_out_at' => $now,

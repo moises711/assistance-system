@@ -28,6 +28,7 @@ class AttendanceController extends ApiController
         if (($filters['scope'] ?? 'mine') === 'all') {
             abort_unless($request->user()->isManager(), 403);
             Gate::authorize('viewAny', Attendance::class);
+            $request->user()->applyTeamScopeTo($query, 'attendances.user_id');
         } else {
             $query->where('user_id', $request->user()->id);
         }
@@ -87,6 +88,7 @@ class AttendanceController extends ApiController
         Gate::authorize('create', Attendance::class);
         $data = $this->validatedRecord($request);
         $this->authorizeOwner($request, (int) $data['user_id']);
+        $data['department_id'] = User::query()->whereKey($data['user_id'])->value('department_id');
         $attendance = DB::transaction(function () use ($data): Attendance {
             User::whereKey($data['user_id'])->lockForUpdate()->firstOrFail();
             $record = new Attendance($data);
@@ -110,7 +112,9 @@ class AttendanceController extends ApiController
     {
         Gate::authorize('update', $attendance);
         $data = $this->validatedRecord($request, $attendance);
-        $this->authorizeOwner($request, (int) ($data['user_id'] ?? $attendance->user_id));
+        $ownerId = (int) ($data['user_id'] ?? $attendance->user_id);
+        $this->authorizeOwner($request, $ownerId);
+        $data['department_id'] = User::query()->whereKey($ownerId)->value('department_id');
         $attendance->fill($data);
         $this->calculateRecord($attendance);
         $attendance->save();

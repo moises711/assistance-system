@@ -19,8 +19,8 @@ class CalendarPolicy
 
     public function view(AuthUser $authUser, Calendar $calendar): bool
     {
-        return (int) $calendar->user_id === (int) $authUser->id
-            || ($authUser->isManager() && $authUser->can('View:Calendar'));
+        return $authUser->canManageUserId((int) $calendar->user_id)
+            && ((int) $calendar->user_id === (int) $authUser->id || $authUser->can('View:Calendar'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -31,38 +31,38 @@ class CalendarPolicy
     public function update(AuthUser $authUser, Calendar $calendar): bool
     {
         return $authUser->isManager() && $authUser->can('Update:Calendar')
-            && ((int) $calendar->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $calendar->user_id);
     }
 
     public function delete(AuthUser $authUser, Calendar $calendar): bool
     {
         return $authUser->isManager() && $authUser->can('Delete:Calendar')
-            && ((int) $calendar->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $calendar->user_id);
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:Calendar');
+        return $authUser->isManager() && $authUser->can('DeleteAny:Calendar');
     }
 
     public function restore(AuthUser $authUser, Calendar $calendar): bool
     {
-        return $authUser->can('Restore:Calendar');
+        return $authUser->isManager() && $authUser->can('Restore:Calendar');
     }
 
     public function forceDelete(AuthUser $authUser, Calendar $calendar): bool
     {
-        return $authUser->can('ForceDelete:Calendar');
+        return $authUser->isManager() && $authUser->can('ForceDelete:Calendar');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Calendar');
+        return $authUser->isManager() && $authUser->can('ForceDeleteAny:Calendar');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Calendar');
+        return $authUser->isManager() && $authUser->can('RestoreAny:Calendar');
     }
 
     public function replicate(AuthUser $authUser, Calendar $calendar): bool

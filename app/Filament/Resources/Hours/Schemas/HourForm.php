@@ -19,13 +19,18 @@ class HourForm
             ->components([
                 Select::make('user_id')
                     ->label('Usuario')
-                    ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => User::query()->tap(fn ($query) => auth()->user()?->applyTeamScopeTo($query, 'users.id'))->orderBy('name')->pluck('name', 'id'))
+                    ->default(fn () => auth()->id())
+                    ->disabled(fn (): bool => ! auth()->user()?->isManager())
                     ->searchable()
                     ->preload()
                     ->required(),
                 Select::make('activity_id')
                     ->label('Actividad')
-                    ->options(fn () => Activity::query()->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => Activity::query()
+                        ->tap(fn ($query) => auth()->user()?->applyTeamScopeTo($query, 'activities.user_id'))
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable()
                     ->preload()
                     ->required(),

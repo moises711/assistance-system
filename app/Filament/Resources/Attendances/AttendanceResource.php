@@ -62,8 +62,8 @@ class AttendanceResource extends Resource
         $user = auth()->user();
 
         // Protegemos por si $user llega a ser null en algún contexto CLI/job
-        if ($user && $user->isManager() && $user->can('viewAny', Attendance::class)) {
-            return $query;
+        if ($user && $user->can('viewAny', Attendance::class)) {
+            return $user->applyTeamScopeTo($query, 'attendances.user_id');
         }
 
         return $query->where('user_id', auth()->id());

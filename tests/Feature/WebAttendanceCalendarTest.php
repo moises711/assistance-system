@@ -20,7 +20,7 @@ class WebAttendanceCalendarTest extends TestCase
 
     public function test_calendar_widget_creates_event_and_dispatches_refresh(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = $this->createPrincipalAdmin(['role' => 'admin']);
         $this->actingAs($user);
         Livewire::test(FullCalendarWidget::class)
             ->callAction('createEvent', data: ['name' => 'Reunión web', 'due_at' => '2026-10-15 09:00:00', 'description' => 'Equipo'])
@@ -42,7 +42,7 @@ class WebAttendanceCalendarTest extends TestCase
 
     public function test_web_activity_is_required_at_exit_and_entry_is_free(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'require_activity_report' => true]);
+        $user = $this->createPrincipalAdmin(['role' => 'admin', 'require_activity_report' => true]);
         $this->actingAs($user);
         $this->assignAttendanceSite($user);
         Livewire::test(DashboardEmpleado::class)->callAction('entrada', data: ['location' => $this->attendancePosition()])->assertHasNoErrors();

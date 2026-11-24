@@ -60,8 +60,8 @@ class CalendarResource extends Resource
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
-        if ($user && $user->isManager() && $user->can('viewAny', Calendar::class)) {
-            return $query;
+        if ($user && $user->can('viewAny', Calendar::class)) {
+            return $user->applyTeamScopeTo($query, 'calendars.user_id');
         }
 
         return $query->where('user_id', auth()->id());

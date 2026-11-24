@@ -11,6 +11,16 @@ class EditReport extends EditRecord
 {
     protected static string $resource = ReportResource::class;
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $actor = auth()->user();
+        $ownerId = (int) ($data['user_id'] ?? $this->record->user_id);
+        abort_unless($actor->canManageUserId($ownerId), 403);
+        $data['user_id'] = $actor->isManager() ? $ownerId : $actor->id;
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

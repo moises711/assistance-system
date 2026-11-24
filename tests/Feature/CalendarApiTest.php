@@ -13,7 +13,7 @@ class CalendarApiTest extends TestCase
 
     public function test_calendar_uses_real_fields_and_owner(): void
     {
-        $manager = User::factory()->create(['role' => 'admin', 'api_token' => 'admin-token']);
+        $manager = $this->createPrincipalAdmin(['role' => 'admin', 'api_token' => 'admin-token']);
         $headers = ['Authorization' => 'Bearer admin-token'];
         $response = $this->postJson('/api/v1/calendars', ['name' => 'Reunión', 'due_at' => '2026-10-15 09:00:00', 'description' => 'Equipo'], $headers)
             ->assertCreated()->assertJsonPath('calendar.name', 'Reunión')->assertJsonPath('calendar.user_id', $manager->id);

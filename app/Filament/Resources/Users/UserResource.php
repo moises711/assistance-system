@@ -60,8 +60,8 @@ class UserResource extends Resource
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
-        if ($user && ($user->hasAnyRole('super_admin') || ($user->isManager() && $user->can('viewAny', User::class)))) {
-            return $query;
+        if ($user && $user->can('viewAny', User::class)) {
+            return $user->applyTeamScopeTo($query, 'users.id');
         }
 
         return $query->where('id', auth()->id());

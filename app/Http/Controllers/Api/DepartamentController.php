@@ -14,7 +14,17 @@ class DepartamentController extends ApiController
      */
     public function index(Request $request): JsonResponse
     {
-        return response()->json($request->user()->isManager() && Gate::allows('viewAny', Departament::class) ? Departament::all() : Departament::whereKey($request->user()->department_id)->get());
+        Gate::authorize('viewAny', Departament::class);
+        $user = $request->user();
+        $query = Departament::query();
+
+        if ($user->isSuperAdmin()) {
+            return response()->json($query->get());
+        }
+
+        $departmentIds = $user->isManager() ? $user->managedDepartmentIds() : [(int) $user->department_id];
+
+        return response()->json($query->whereKey($departmentIds)->get());
     }
 
     /**
@@ -41,7 +51,7 @@ class DepartamentController extends ApiController
      */
     public function show(Request $request, Departament $departament): JsonResponse
     {
-        abort_unless(Gate::allows('view', $departament) || (int) $request->user()->department_id === (int) $departament->id, 403);
+        abort_unless(Gate::allows('view', $departament), 403);
 
         return response()->json($departament);
     }

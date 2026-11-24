@@ -59,12 +59,19 @@ class DepartamentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        $user = auth()->user();
-        if ($user && $user->hasRole('super_admin')) {
+        $actor = auth()->user();
+
+        if (! $actor) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($actor->isSuperAdmin()) {
             return $query;
         }
 
-        return $query->where('user_id', auth()->id());
+        $departmentIds = $actor->isManager() ? $actor->managedDepartmentIds() : [(int) $actor->department_id];
+
+        return $query->whereKey($departmentIds);
     }
 
     public static function getPages(): array

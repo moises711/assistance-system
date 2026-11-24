@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Attendances\Tables;
 
+use App\Models\Attendance;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -111,6 +112,7 @@ class AttendancesTable
                     ->label('Exportar')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
+                    ->authorize('viewAny', Attendance::class)
                     ->exports([
                         ExcelExport::make('asistencias')->fromTable()
                             ->withFilename('asistencias-'.date('Y-m-d'))

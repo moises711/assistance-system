@@ -18,7 +18,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirect('/admin/login');
     }
 
     public function test_it_checks_in_once_per_day(): void

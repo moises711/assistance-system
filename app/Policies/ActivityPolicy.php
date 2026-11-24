@@ -19,8 +19,8 @@ class ActivityPolicy
 
     public function view(AuthUser $authUser, Activity $activity): bool
     {
-        return (int) $activity->user_id === (int) $authUser->id
-            || ($authUser->isManager() && $authUser->can('View:Activity'));
+        return $authUser->canManageUserId((int) $activity->user_id)
+            && ((int) $activity->user_id === (int) $authUser->id || $authUser->can('View:Activity'));
     }
 
     public function create(AuthUser $authUser): bool
@@ -31,38 +31,38 @@ class ActivityPolicy
     public function update(AuthUser $authUser, Activity $activity): bool
     {
         return $activity->attendance_id === null && ! $activity->isLogin() && $authUser->can('Update:Activity')
-            && ((int) $activity->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $activity->user_id);
     }
 
     public function delete(AuthUser $authUser, Activity $activity): bool
     {
         return $activity->attendance_id === null && ! $activity->isLogin() && $authUser->can('Delete:Activity')
-            && ((int) $activity->user_id === (int) $authUser->id || $authUser->isManager());
+            && $authUser->canManageUserId((int) $activity->user_id);
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:Activity');
+        return $authUser->isManager() && $authUser->can('DeleteAny:Activity');
     }
 
     public function restore(AuthUser $authUser, Activity $activity): bool
     {
-        return $authUser->can('Restore:Activity');
+        return $authUser->isManager() && $authUser->can('Restore:Activity');
     }
 
     public function forceDelete(AuthUser $authUser, Activity $activity): bool
     {
-        return $authUser->can('ForceDelete:Activity');
+        return $authUser->isManager() && $authUser->can('ForceDelete:Activity');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Activity');
+        return $authUser->isManager() && $authUser->can('ForceDeleteAny:Activity');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Activity');
+        return $authUser->isManager() && $authUser->can('RestoreAny:Activity');
     }
 
     public function replicate(AuthUser $authUser, Activity $activity): bool

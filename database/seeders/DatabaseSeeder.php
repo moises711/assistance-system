@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(ShieldSeeder::class);
+        $this->call(DynamicShieldPermissionsSeeder::class);
 
         $adminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         $admin = User::firstOrNew(['email' => 'army27014@gmail.com']);

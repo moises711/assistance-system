@@ -10,6 +10,11 @@ use Illuminate\Support\Carbon;
 
 class EmployeeAttendanceStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:EmployeeAttendanceStats') ?? false;
+    }
+
     protected function getStats(): array
     {
         $user = auth()->user();
